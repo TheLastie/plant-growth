@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#e8e3d7">
+  <meta name="description" content="Вырастите цифровое растение и наблюдайте, как свет, вода, возраст и ветер меняют его форму. Интерактивная лаборатория роста на основе процедурных алгоритмов.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Silva — лаборатория роста растений">
+  <meta property="og:description" content="Настройте среду, вырастите дерево или папоротник и исследуйте алгоритмы его формы.">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:image" content="screenshots/plant-growth.png">
+  <title>Silva — лаборатория роста растений</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 35V19M20 25C11 24 7 19 8 10c8-1 13 3 12 12m0 3c1-9 6-13 14-12 0 8-4 13-14 14' fill='none' stroke='%232c5942' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Silva Plant Growth Lab",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Any",
+    "inLanguage": ["ru", "en"],
+    "description": "An interactive procedural plant growth simulator showing how light, water, age, and wind shape trees and foliage."
+  }
+  </script>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="masthead">
+      <a class="wordmark" href="./" aria-label="Silva — лаборатория роста">
+        <span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>silva<span class="wordmark-dot">.</span></span>
+      </a>
+      <div class="masthead-note"><span class="live-dot"></span> Цифровой гербарий <span class="slash">/</span> Сезон 01</div>
+      <a class="github-link" href="https://github.com/TheLastie/plant-growth" target="_blank" rel="noreferrer">Исходный код <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <div class="intro-copy">
+          <p class="kicker">Лаборатория формы <span>№ 01</span></p>
+          <h1 id="page-title">Растение помнит,<br><em>где был свет.</em></h1>
+          <p class="intro-text">Создайте условия — и посмотрите, как среда оставляет след в каждой ветви.</p>
+        </div>
+        <div class="specimen-stamp" aria-label="Цифровой образец, участок 04">
+          <span class="stamp-line">Образец</span>
+          <strong>04</strong>
+          <span class="stamp-line">Silva · field notes</span>
+        </div>
+      </section>
+
+      <section class="workbench" aria-label="Симулятор роста растений">
+        <aside class="controls-panel">
+          <div class="panel-heading">
+            <div><span class="eyebrow">Среда и вид</span><h2>Условия роста</h2></div>
+            <button class="reset-button" id="resetButton" type="button" title="Вернуть исходные условия">Сбросить</button>
+          </div>
+
+          <fieldset class="species-picker">
+            <legend>Выберите растение</legend>
+            <div class="species-options" role="group" aria-label="Вид растения">
+              <button class="species-button is-active" type="button" data-species="oak" aria-pressed="true"><span class="species-glyph oak-glyph" aria-hidden="true"></span><span>Дуб</span></button>
+              <button class="species-button" type="button" data-species="birch" aria-pressed="false"><span class="species-glyph birch-glyph" aria-hidden="true"></span><span>Берёза</span></button>
+              <button class="species-button" type="button" data-species="fern" aria-pressed="false"><span class="species-glyph fern-glyph" aria-hidden="true"></span><span>Папоротник</span></button>
+              <button class="species-button" type="button" data-species="monstera" aria-pressed="false"><span class="species-glyph monstera-glyph" aria-hidden="true"></span><span>Монстера</span></button>
+            </div>
+          </fieldset>
+
+          <div class="slider-group">
+            <div class="slider-label"><label for="ageInput">Возраст</label><output id="ageOutput" for="ageInput">6 лет</output></div>
+            <input id="ageInput" type="range" min="1" max="12" value="6">
+            <div class="range-ends"><span>Саженец</span><span>Зрелое</span></div>
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label"><label for="lightInput">Свет</label><output id="lightOutput" for="lightInput">Восток · 72%</output></div>
+            <input id="lightInput" type="range" min="0" max="100" value="72">
+            <div class="range-ends"><span>Тень</span><span>Открытое место</span></div>
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label"><label for="waterInput">Влага</label><output id="waterOutput" for="waterInput">Умеренно · 58%</output></div>
+            <input id="waterInput" type="range" min="0" max="100" value="58">
+            <div class="range-ends"><span>Сухо</span><span>Влажно</span></div>
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label"><label for="windInput">Ветер</label><output id="windOutput" for="windInput">Лёгкий · 18%</output></div>
+            <input id="windInput" type="range" min="0" max="100" value="18">
+            <div class="range-ends"><span>Тихо</span><span>Ветрено</span></div>
+          </div>
+
+          <p class="control-note"><span class="note-mark">↗</span> Направление света задаёт, куда растение тянется. Потяните ползунок, чтобы изменить его.</p>
+        </aside>
+
+        <section class="specimen-panel" aria-label="Растение и его рост">
+          <div class="canvas-toolbar">
+            <div class="specimen-name"><span class="specimen-index">S-04</span><strong id="plantName">Quercus robur</strong></div>
+            <div class="canvas-actions"><span class="canvas-status"><span></span> Симуляция</span><button id="downloadButton" class="icon-button" type="button" aria-label="Сохранить изображение растения" title="Сохранить изображение">↓</button></div>
+          </div>
+          <div class="canvas-wrap">
+            <canvas id="plantCanvas" aria-label="Процедурная иллюстрация растущего дуба"></canvas>
+            <div class="canvas-coordinate coordinate-top">N 56° 50′ <span>участок 04</span></div>
+            <div class="canvas-coordinate coordinate-bottom">Срез почвы <span id="heightReadout">около 4.8 м</span></div>
+            <div class="light-indicator" id="lightIndicator" aria-hidden="true"><span>СВЕТ</span><i></i></div>
+          </div>
+          <div class="growth-footer">
+            <div class="growth-caption"><span class="eyebrow">Развитие образца</span><span id="stageLabel">Ювенильный рост</span></div>
+            <div class="growth-meter" aria-hidden="true"><i id="growthMeter"></i></div>
+            <span class="growth-age" id="ageSummary">06 / 12 лет</span>
+          </div>
+        </section>
+
+        <aside class="fieldnotes-panel">
+          <div class="notes-head"><span class="eyebrow">Полевые заметки</span><span class="notes-number">01—03</span></div>
+          <h2>Как появляется<br><em>характер.</em></h2>
+          <div class="note-tabs" role="tablist" aria-label="Алгоритмы роста">
+            <button class="note-tab is-active" role="tab" aria-selected="true" aria-controls="noteContent" id="tab-branching" data-note="branching">Ветвление</button>
+            <button class="note-tab" role="tab" aria-selected="false" aria-controls="noteContent" id="tab-light" data-note="light">Свет</button>
+            <button class="note-tab" role="tab" aria-selected="false" aria-controls="noteContent" id="tab-wind" data-note="wind">Ветер</button>
+          </div>
+          <div class="note-content" id="noteContent" role="tabpanel" aria-labelledby="tab-branching" tabindex="0">
+            <span class="note-symbol" id="noteSymbol" aria-hidden="true">Y</span>
+            <h3 id="noteTitle">Ветви повторяют себя</h3>
+            <p id="noteBody">Каждый новый побег наследует направление ствола, но расходится под собственным углом. Повторение на разных масштабах создаёт узнаваемую крону.</p>
+            <div class="formula" id="noteFormula">Lₙ₊₁ = 0.72 × Lₙ <span>· правило ветвления</span></div>
+          </div>
+          <div class="measured-values">
+            <div><span>Площадь кроны</span><strong id="crownReadout">12.4 м²</strong></div>
+            <div><span>Листьев в кроне</span><strong id="leafReadout">284</strong></div>
+          </div>
+          <p class="model-caption">Модель упрощает биологические процессы, сохраняя причинную связь между средой и формой.</p>
+        </aside>
+      </section>
+
+      <footer class="page-footer"><span>Silva / Лаборатория роста</span><span>Форма — это запись условий</span><a href="README.md">О проекте ↗</a></footer>
+    </main>
+  </div>
+  <script src="app.js" defer></script>
+</body>
+</html>

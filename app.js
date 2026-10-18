@@ -1,0 +1,146 @@
+(() => {
+  const canvas = document.querySelector('#plantCanvas'), ctx = canvas.getContext('2d');
+  const $ = id => document.getElementById(id);
+  const input = { age: $('ageInput'), light: $('lightInput'), water: $('waterInput'), wind: $('windInput') };
+  const state = { species: 'oak', age: 6, light: 72, water: 58, wind: 18 };
+  const plants = {
+    oak: { name: 'Quercus robur', height: 1.2, spread: .54, leaf: '#536d46', lightLeaf: '#8c9b69', bark: '#745943', width: 4.2 },
+    birch: { name: 'Betula pendula', height: 1.34, spread: .38, leaf: '#869b64', lightLeaf: '#bdc28c', bark: '#e3ddc9', width: 3.1 },
+    fern: { name: 'Pteridium aquilinum', height: .64, spread: .78, leaf: '#587443', lightLeaf: '#9eaa70', bark: '#506940', width: 1.4 },
+    monstera: { name: 'Monstera deliciosa', height: .83, spread: .65, leaf: '#365d47', lightLeaf: '#8da878', bark: '#52714f', width: 2.7 }
+  };
+  const notes = {
+    branching: ['Ветви повторяют себя', 'Каждый новый побег наследует направление ствола, но расходится под собственным углом. Повторение на разных масштабах создаёт узнаваемую крону.', 'Lₙ₊₁ = 0.72 × Lₙ', 'правило ветвления', 'Y'],
+    light: ['Рост следует за светом', 'На каждом шаге побег немного поворачивается к источнику. При боковом освещении ствол изгибается, а крона смещается к открытому месту.', 'θₙ₊₁ = θₙ + 0.18ΔL', 'фототропизм', '☼'],
+    wind: ['Ветер оставляет изгиб', 'Регулярная нагрузка уводит молодые ветви по ветру. Чем сильнее ветер, тем ниже крона и тем заметнее наклон ствола.', 'b = 0.34 × сила ветра', 'механический ответ', '≈']
+  };
+
+  const randomFor = seed => { let n = seed >>> 0; return () => ((n = (n * 1664525 + 1013904223) >>> 0) / 4294967296); };
+  const round = n => Math.round(n * 10) / 10;
+
+  function background(w, h, ground) {
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, '#e9ebdf'); grad.addColorStop(.72, '#dce2d2'); grad.addColorStop(1, '#d3dacb');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = 'rgba(74,101,75,.07)'; ctx.lineWidth = 1;
+    for (let x = 14.5; x < w; x += 28) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, ground); ctx.stroke(); }
+    for (let y = 14.5; y < ground; y += 28) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+    const sunX = w * (.12 + .76 * state.light / 100), sunY = 60;
+    const glow = ctx.createRadialGradient(sunX, sunY, 2, sunX, sunY, 76);
+    glow.addColorStop(0, 'rgba(237,196,116,.34)'); glow.addColorStop(1, 'rgba(237,196,116,0)');
+    ctx.fillStyle = glow; ctx.fillRect(sunX - 76, sunY - 76, 152, 152);
+    ctx.fillStyle = '#e9c778'; ctx.beginPath(); ctx.arc(sunX, sunY, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#c5cbb8'; ctx.beginPath(); ctx.moveTo(0, ground); ctx.quadraticCurveTo(w * .42, ground - 14, w, ground + 2); ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.fill();
+    ctx.strokeStyle = '#9eaa96'; ctx.beginPath(); ctx.moveTo(0, ground); ctx.quadraticCurveTo(w * .42, ground - 14, w, ground + 2); ctx.stroke();
+    const rng = randomFor(481);
+    for (let i = 0; i < w * .32; i++) { ctx.globalAlpha = .1; ctx.fillStyle = '#77836b'; ctx.fillRect(rng() * w, ground + rng() * Math.max(8, h - ground), 1.5, 1); }
+    ctx.globalAlpha = 1;
+    return sunX;
+  }
+
+  function leaf(x, y, angle, size, rng, plant) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(angle + (rng() - .5) * .6);
+    ctx.fillStyle = (rng() > .48 ? plant.leaf : plant.lightLeaf);
+    ctx.strokeStyle = 'rgba(38,63,43,.35)'; ctx.lineWidth = .7;
+    const rx = size * (state.species === 'monstera' ? 1.15 : .95), ry = size * .65;
+    ctx.beginPath(); ctx.moveTo(-rx, 0); ctx.quadraticCurveTo(-rx * .4, -ry * 1.25, rx, 0); ctx.quadraticCurveTo(-rx * .4, ry * 1.25, -rx, 0); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(232,228,196,.62)'; ctx.beginPath(); ctx.moveTo(-rx * .8, 0); ctx.lineTo(rx * .83, 0); ctx.stroke();
+    if (state.species === 'monstera') {
+      ctx.fillStyle = '#dce2d3';
+      for (const t of [-.52, -.16, .2, .54]) { ctx.beginPath(); ctx.ellipse(rx * t, -ry * .62, rx * .075, ry * .15, t, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.ellipse(rx * t, ry * .62, rx * .075, ry * .15, -t, 0, Math.PI * 2); ctx.fill(); }
+    }
+    ctx.restore();
+  }
+
+  function renderPlant(w, ground, plant, rng) {
+    const scale = Math.min(w / 610, 1.05), age = state.age / 12;
+    const maxDepth = Math.min(8, 4 + Math.floor(age * 4));
+    const desiredHeight = Math.min(ground * .7, plant.height * (40 + state.age * 30) * scale);
+    const size = desiredHeight * .3 / (1 - Math.pow(.7, maxDepth + 1));
+    const x0 = w * .5 - (state.light - 50) * .68 * scale - state.wind * .16 * scale, y0 = ground;
+    const lightLean = (state.light / 100 - .5) * 1.02, wind = state.wind / 100 * .44;
+    let leaves = 0, minX = x0, maxX = x0;
+    ctx.save(); ctx.strokeStyle = plant.bark; ctx.globalAlpha = .7; ctx.lineCap = 'round';
+    for (let i = 0; i < 7; i++) { const side = i % 2 ? 1 : -1, len = (12 + rng() * 26) * scale; ctx.lineWidth = 1.2 * scale; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(x0 + side * len * .45, y0 + len * .2, x0 + side * len, y0 + len * .65); ctx.stroke(); }
+    ctx.restore();
+
+    if (state.species === 'fern') {
+      const fronds = 5 + Math.round(age * 9);
+      for (let f = 0; f < fronds; f++) {
+        const side = f % 2 ? 1 : -1, a = side * (.2 + f / fronds * .32) + lightLean * .3, len = desiredHeight * (.7 + rng() * .35);
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.strokeStyle = plant.bark; ctx.lineWidth = 1.5 * scale;
+        for (let j = 1; j <= 18; j++) { const t = j / 18, x = x0 + Math.sin(a) * len * t, y = y0 - len * t; ctx.lineTo(x, y); if (j % 3 === 0) { leaf(x, y, a + side * .8, (7 + (1 - t) * 5) * scale, rng, plant); leaves += 2; } }
+        ctx.stroke();
+      }
+      minX = x0 - size * .45; maxX = x0 + size * .45;
+    } else if (state.species === 'monstera') {
+      const count = 4 + Math.floor(age * 10);
+      for (let i = 0; i < count; i++) { const y = y0 - (i + 1) * desiredHeight / (count + 1), side = i % 2 ? 1 : -1, a = side * (.6 + rng() * .3) + lightLean * .35, reach = (48 + rng() * 33) * scale; ctx.beginPath(); ctx.moveTo(x0, y); ctx.quadraticCurveTo(x0 + side * 18 * scale, y + 6, x0 + side * reach * .3, y + 8); ctx.strokeStyle = plant.bark; ctx.lineWidth = 2 * scale; ctx.stroke(); leaf(x0 + side * reach * .35, y - 2, a, (19 + rng() * 8) * scale, rng, plant); leaves++; minX = Math.min(minX, x0 - reach * .5); maxX = Math.max(maxX, x0 + reach * .5); }
+    }
+
+    function branch(x, y, a, len, thick, depth) {
+      if (depth > maxDepth || len < 5 * scale || (depth > 2 && state.age < 3 && rng() < (3 - state.age) * .24)) {
+        const n = state.species === 'monstera' ? 1 : 3;
+        for (let i = 0; i < n; i++) { leaf(x + (rng() - .5) * 5 * scale, y + (rng() - .5) * 5 * scale, a + (rng() - .5), (7 + rng() * 5) * scale * (.65 + state.water / 200), rng, plant); leaves++; }
+        return;
+      }
+      const next = a + (depth === 0 ? lightLean * .43 : lightLean * .16) + Math.sin(depth * 1.7) * wind * .12;
+      const dx = Math.sin(next) * len, dy = Math.cos(next) * len, nx = x + dx, ny = y - dy;
+      minX = Math.min(minX, nx); maxX = Math.max(maxX, nx);
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + dx * .52 + wind * len * .025, y - dy * .52, nx, ny);
+      ctx.strokeStyle = plant.bark; ctx.lineWidth = Math.max(.6, thick); ctx.lineCap = 'round'; ctx.stroke();
+      if (depth >= maxDepth - 2 || (depth > 0 && rng() > (depth < 3 ? .4 : .22))) {
+        const s = plant.spread * (.8 + rng() * .4);
+        branch(nx, ny, next - s, len * (.68 + rng() * .05), thick * .68, depth + 1);
+        branch(nx, ny, next + s, len * (.68 + rng() * .05), thick * .68, depth + 1);
+        if (depth < 2 && rng() > .55) branch(nx, ny, next + (rng() - .5) * .3, len * .57, thick * .55, depth + 1);
+      } else if (rng() > .15) branch(nx, ny, next + plant.spread * (rng() > .5 ? 1 : -1), len * (.69 + rng() * .04), thick * .68, depth + 1);
+      if (depth === maxDepth - 1 || len < 22 * scale) { leaf(nx, ny, next + .2, (8 + rng() * 4) * scale, rng, plant); leaves++; }
+    }
+    if (state.species !== 'fern') branch(x0, y0, lightLean * .14 - wind * .15, size, plant.width * scale * (.72 + age * .48), 0);
+    return { leaves, width: maxX - minX, x: x0, top: y0 - desiredHeight };
+  }
+
+  function draw() {
+    const w = canvas.clientWidth, h = canvas.clientHeight; if (!w || !h) return;
+    ctx.clearRect(0, 0, w, h); const ground = h * .76, sunX = background(w, h, ground), plant = plants[state.species];
+    const rng = randomFor(2026 + state.age * 101 + state.light * 17 + state.water * 7 + state.wind * 19 + state.species.length * 997);
+    const result = renderPlant(w, ground, plant, rng);
+    const badge = $('lightIndicator'); badge.style.left = `${Math.max(3, Math.min(87, sunX / w * 100))}%`; badge.style.right = 'auto';
+    badge.querySelector('i').style.opacity = .42 + state.light / 180;
+    updateLabels(result, plant);
+  }
+
+  function updateLabels(result, plant) {
+    $('ageOutput').textContent = state.age === 1 ? '1 год' : `${state.age} лет`;
+    $('lightOutput').textContent = `${state.light < 35 ? 'Тень' : state.light < 68 ? 'Полутень' : 'Открытое место'} · ${state.light}%`;
+    $('waterOutput').textContent = `${state.water < 30 ? 'Сухо' : state.water < 70 ? 'Умеренно' : 'Влажно'} · ${state.water}%`;
+    $('windOutput').textContent = `${state.wind < 25 ? 'Тихо' : state.wind < 65 ? 'Лёгкий' : 'Сильный'} · ${state.wind}%`;
+    Object.values(input).forEach(el => el.style.setProperty('--fill', `${(el.value - el.min) / (el.max - el.min) * 100}%`));
+    $('ageSummary').textContent = `${String(state.age).padStart(2, '0')} / 12 лет`; $('growthMeter').style.width = `${state.age / 12 * 100}%`;
+    $('stageLabel').textContent = state.age <= 2 ? 'Укоренение' : state.age <= 5 ? 'Ювенильный рост' : state.age <= 9 ? 'Формирование кроны' : 'Зрелое растение';
+    $('heightReadout').textContent = `около ${round(plant.height * state.age * (.72 + state.water / 350) * (.8 + state.light / 400))} м`;
+    $('crownReadout').textContent = `${round(Math.max(.8, result.width / 29 * plant.height))} м²`; $('leafReadout').textContent = result.leaves;
+    $('plantName').textContent = plant.name;
+    canvas.setAttribute('aria-label', `Процедурная иллюстрация ${plant.name}, возраст ${state.age} лет`);
+  }
+
+  function update() {
+    for (const key of Object.keys(input)) state[key] = Number(input[key].value);
+    requestAnimationFrame(draw);
+  }
+  function resize() { const box = canvas.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2); if (!box.width || !box.height) return; canvas.width = Math.round(box.width * dpr); canvas.height = Math.round(box.height * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); draw(); }
+  Object.values(input).forEach(el => el.addEventListener('input', update));
+  document.querySelectorAll('.species-button').forEach(button => button.addEventListener('click', () => {
+    state.species = button.dataset.species;
+    document.querySelectorAll('.species-button').forEach(item => { const active = item === button; item.classList.toggle('is-active', active); item.setAttribute('aria-pressed', String(active)); }); update();
+  }));
+  document.querySelectorAll('.note-tab').forEach((tab, index, tabs) => {
+    function activate() { const [title, body, formula, caption, symbol] = notes[tab.dataset.note]; tabs.forEach(t => { const active = t === tab; t.classList.toggle('is-active', active); t.setAttribute('aria-selected', String(active)); t.tabIndex = active ? 0 : -1; }); $('noteContent').setAttribute('aria-labelledby', tab.id); $('noteSymbol').textContent = symbol; $('noteTitle').textContent = title; $('noteBody').textContent = body; $('noteFormula').innerHTML = `${formula} <span>· ${caption}</span>`; }
+    tab.addEventListener('click', activate); tab.addEventListener('keydown', e => { if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return; e.preventDefault(); const next = tabs[(index + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length]; next.focus(); next.click(); });
+  });
+  $('resetButton').addEventListener('click', () => { state.species = 'oak'; for (const [key, value] of Object.entries({ age: 6, light: 72, water: 58, wind: 18 })) input[key].value = value; document.querySelectorAll('.species-button').forEach(b => { const active = b.dataset.species === 'oak'; b.classList.toggle('is-active', active); b.setAttribute('aria-pressed', String(active)); }); update(); });
+  $('downloadButton').addEventListener('click', () => { const a = document.createElement('a'); a.download = `silva-${state.species}-${state.age}-years.png`; a.href = canvas.toDataURL('image/png'); a.click(); });
+  if ('ResizeObserver' in window) new ResizeObserver(resize).observe(canvas.parentElement); else addEventListener('resize', resize, { passive: true });
+  resize();
+})();
