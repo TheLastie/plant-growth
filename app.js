@@ -5,8 +5,19 @@
   const escapeHTML = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
   const MAX_AGE = 120;
   const MAX_TRUNK_MULTIPLIER = 30;
+  const STUDY_STORAGE_KEY = 'silva:study-sheet:v1';
   const state = { species: 'oak', age: 6, light: 72, water: 58, wind: 18 };
-  const studies = [];
+  let studyStorageAvailable = true;
+  const readStudies = () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STUDY_STORAGE_KEY) || '[]');
+      if (!Array.isArray(saved)) return [];
+      return saved.filter(item => item && typeof item.id === 'string' && typeof item.label === 'string' &&
+        typeof item.name === 'string' && typeof item.image === 'string' && item.image.startsWith('data:image/') &&
+        Number.isFinite(item.age) && Number.isFinite(item.light) && Number.isFinite(item.water) && Number.isFinite(item.wind)).slice(0, 4);
+    } catch { studyStorageAvailable = false; return []; }
+  };
+  const studies = readStudies();
   let growthSettleTimer;
   const trunkGrowth = age => 1 + (MAX_TRUNK_MULTIPLIER - 1) * (Math.max(1, Math.min(MAX_AGE, age)) - 1) / (MAX_AGE - 1);
   const plants = {
@@ -211,14 +222,34 @@
   function renderStudies() {
     $('exportStudies').disabled = studies.length === 0;
     $('studyCaption').textContent = studies.length
-      ? `${studies.length} из 4 образцов · Сравните силуэт, возраст, свет, влагу и ветер. Это визуальная модель, не биологический прогноз.`
-      : 'Сохраняйте формы при разных условиях и сравнивайте их рядом. Это визуальная модель, а не прогноз роста настоящего растения.';
+      ? `${studies.length} из 4 образцов · ${studyStorageAvailable ? 'Подборка сохранена в этом браузере.' : 'Подборка доступна только до закрытия этой страницы.'} Сравните силуэт, возраст, свет, влагу и ветер. Это визуальная модель, не биологический прогноз.`
+      : studyStorageAvailable
+        ? 'Сохраняйте формы при разных условиях — подборка останется в этом браузере и её можно будет скачать листом сравнения.'
+        : 'Локальное сохранение отключено браузером. Образцы останутся только в текущем сеансе.';
     $('studyGrid').innerHTML = studies.map((item,index) => `<article class="study-card"><img src="${item.image}" alt="${escapeHTML(item.label)}, ${escapeHTML(item.name)}, ${item.age} лет"><div class="study-card-copy"><strong>${escapeHTML(item.label)}</strong><span>${escapeHTML(item.name)} · ${item.age} лет</span><span>Свет ${item.light}% · Влага ${item.water}% · Ветер ${item.wind}%</span></div><button type="button" data-remove-study="${item.id}" aria-label="Удалить образец ${index+1}">×</button></article>`).join('');
     $('studyGrid').querySelectorAll('[data-remove-study]').forEach(button => button.addEventListener('click', () => {
       const index = studies.findIndex(item => item.id === button.dataset.removeStudy);
       if (index >= 0) studies.splice(index, 1);
+      persistStudies();
       renderStudies();
     }));
+  }
+  function persistStudies() {
+    try {
+      localStorage.setItem(STUDY_STORAGE_KEY, JSON.stringify(studies));
+      return true;
+    } catch {
+      studyStorageAvailable = false;
+      return false;
+    }
+  }
+  function studyPreview() {
+    const preview = document.createElement('canvas');
+    const scale = Math.min(1, 480 / canvas.width, 300 / canvas.height);
+    preview.width = Math.max(1, Math.round(canvas.width * scale));
+    preview.height = Math.max(1, Math.round(canvas.height * scale));
+    preview.getContext('2d').drawImage(canvas, 0, 0, preview.width, preview.height);
+    return preview.toDataURL('image/jpeg', .78);
   }
   function saveStudy() {
     if (studies.length >= 4) { $('studyCaption').textContent = 'Лист уже содержит четыре образца. Удали один, чтобы сохранить новый.'; return; }
@@ -226,7 +257,7 @@
     const label = labelInput.value.trim() || `${plants[state.species].name} · ${state.age} лет`;
     studies.push({
       id: `${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
-      image: canvas.toDataURL('image/png'),
+      image: studyPreview(),
       label,
       name: plants[state.species].name,
       age: state.age,
@@ -235,6 +266,7 @@
       wind: state.wind
     });
     labelInput.value = '';
+    persistStudies();
     renderStudies();
   }
   async function exportStudySheet() {
@@ -279,6 +311,7 @@
   $('downloadButton').addEventListener('click', () => { const a = document.createElement('a'); a.download = `silva-${state.species}-${state.age}-years.png`; a.href = canvas.toDataURL('image/png'); a.click(); });
   $('saveStudy').addEventListener('click', () => requestAnimationFrame(saveStudy));
   $('exportStudies').addEventListener('click', exportStudySheet);
+  renderStudies();
   if ('ResizeObserver' in window) new ResizeObserver(resize).observe(canvas.parentElement); else addEventListener('resize', resize, { passive: true });
   resize();
 })();
