@@ -3,11 +3,13 @@
   const $ = id => document.getElementById(id);
   const input = { age: $('ageInput'), light: $('lightInput'), water: $('waterInput'), wind: $('windInput') };
   const MAX_AGE = 120;
+  const MAX_TRUNK_MULTIPLIER = 30;
   const state = { species: 'oak', age: 6, light: 72, water: 58, wind: 18 };
   let growthSettleTimer;
+  const trunkGrowth = age => 1 + (MAX_TRUNK_MULTIPLIER - 1) * (Math.max(1, Math.min(MAX_AGE, age)) - 1) / (MAX_AGE - 1);
   const plants = {
-    oak: { name: 'Quercus robur', height: 1.2, matureHeight: 28, maturity: 34, matureTrunkDiameter: 96, spread: .54, leaf: '#536d46', lightLeaf: '#8c9b69', bark: '#745943', width: 4.2 },
-    birch: { name: 'Betula pendula', height: 1.34, matureHeight: 24, maturity: 26, matureTrunkDiameter: 52, spread: .38, leaf: '#869b64', lightLeaf: '#bdc28c', bark: '#e3ddc9', width: 3.1 },
+    oak: { name: 'Quercus robur', height: 1.2, matureHeight: 28, maturity: 34, matureTrunkDiameter: 90, spread: .54, leaf: '#536d46', lightLeaf: '#8c9b69', bark: '#745943', width: 4.2 },
+    birch: { name: 'Betula pendula', height: 1.34, matureHeight: 24, maturity: 26, matureTrunkDiameter: 60, spread: .38, leaf: '#869b64', lightLeaf: '#bdc28c', bark: '#e3ddc9', width: 3.1 },
     fern: { name: 'Pteridium aquilinum', height: .64, matureHeight: 1.8, maturity: 8, spread: .78, leaf: '#587443', lightLeaf: '#9eaa70', bark: '#506940', width: 1.4 },
     monstera: { name: 'Monstera deliciosa', height: .83, matureHeight: 3.2, maturity: 14, spread: .65, leaf: '#365d47', lightLeaf: '#8da878', bark: '#52714f', width: 2.7 }
   };
@@ -120,6 +122,7 @@
 
     let branchCount = 0;
     const segmentLimit = 2600;
+    const crownBranchWidth = plant.width * scale * (.7 + ageGrowth * 1.35);
     function branch(x, y, a, len, thick, depth) {
       if (depth > maxDepth || len < 3.5 * scale || branchCount >= segmentLimit) {
         for (let i = 0; i < 3; i++) { leaf(x + (rng() - .5) * 5 * scale, y + (rng() - .5) * 5 * scale, a + (rng() - .5), (7 + rng() * 5) * scale * (.65 + state.water / 200), rng, plant); leaves++; }
@@ -129,16 +132,39 @@
       const next = a + (depth === 0 ? lightLean * .43 : lightLean * .16) + Math.sin(depth * 1.7) * wind * .12;
       const dx = Math.sin(next) * len, dy = Math.cos(next) * len, nx = x + dx, ny = y - dy;
       minX = Math.min(minX, nx); maxX = Math.max(maxX, nx);
-      ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + dx * .52 + wind * len * .025, y - dy * .52, nx, ny);
-      ctx.strokeStyle = plant.bark; ctx.lineWidth = Math.max(.6, thick); ctx.lineCap = 'round'; ctx.stroke();
+      const controlX = x + dx * .52 + wind * len * .025, controlY = y - dy * .52;
+      ctx.strokeStyle = plant.bark; ctx.lineWidth = Math.max(.6, thick); ctx.lineCap = 'round';
+      if (depth === 0 && thick > crownBranchWidth) {
+        const leftEdge = [], rightEdge = [], steps = 10;
+        for (let i = 0; i <= steps; i++) {
+          const t = i / steps, inverse = 1 - t;
+          const px = inverse * inverse * x + 2 * inverse * t * controlX + t * t * nx;
+          const py = inverse * inverse * y + 2 * inverse * t * controlY + t * t * ny;
+          const tangentX = 2 * inverse * (controlX - x) + 2 * t * (nx - controlX);
+          const tangentY = 2 * inverse * (controlY - y) + 2 * t * (ny - controlY);
+          const tangentLength = Math.max(1, Math.hypot(tangentX, tangentY));
+          const halfWidth = (thick * (1 - t) + crownBranchWidth * t) / 2;
+          const normalX = -tangentY / tangentLength, normalY = tangentX / tangentLength;
+          leftEdge.push([px + normalX * halfWidth, py + normalY * halfWidth]);
+          rightEdge.push([px - normalX * halfWidth, py - normalY * halfWidth]);
+        }
+        ctx.beginPath();
+        ctx.moveTo(leftEdge[0][0], leftEdge[0][1]);
+        for (const [px, py] of leftEdge.slice(1)) ctx.lineTo(px, py);
+        for (const [px, py] of rightEdge.reverse()) ctx.lineTo(px, py);
+        ctx.closePath(); ctx.fillStyle = plant.bark; ctx.fill();
+      } else {
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(controlX, controlY, nx, ny); ctx.stroke();
+      }
       const spread = plant.spread * (.84 + rng() * .32);
       const branchLength = len * (.68 + rng() * .05);
-      branch(nx, ny, next - spread, branchLength, thick * .68, depth + 1);
-      branch(nx, ny, next + spread, branchLength, thick * .68, depth + 1);
-      if (depth < 3 && rng() > .58) branch(nx, ny, next + (rng() - .5) * .3, len * .57, thick * .55, depth + 1);
+      const childThickness = depth === 0 ? crownBranchWidth : thick * .68;
+      branch(nx, ny, next - spread, branchLength, childThickness, depth + 1);
+      branch(nx, ny, next + spread, branchLength, childThickness, depth + 1);
+      if (depth < 3 && rng() > .58) branch(nx, ny, next + (rng() - .5) * .3, len * .57, depth === 0 ? crownBranchWidth * .8 : thick * .55, depth + 1);
       if (depth === maxDepth - 1 || len < 22 * scale) { leaf(nx, ny, next + .2, (8 + rng() * 4) * scale, rng, plant); leaves++; }
     }
-    if (state.species === 'oak' || state.species === 'birch') branch(x0, y0, lightLean * .14 - wind * .15, size, plant.width * scale * (.7 + ageGrowth * 1.35), 0);
+    if (state.species === 'oak' || state.species === 'birch') branch(x0, y0, lightLean * .14 - wind * .15, size, plant.width * scale * trunkGrowth(state.age), 0);
     return { leaves, width: maxX - minX, x: x0, top: y0 - desiredHeight };
   }
 
@@ -165,7 +191,7 @@
     const estimatedHeight = plant.matureHeight * (1 - Math.exp(-state.age / plant.maturity)) * (.86 + state.water / 500) * (.9 + state.light / 1000);
     $('heightReadout').textContent = `около ${round(Math.min(plant.matureHeight, estimatedHeight))} м`;
     $('crownReadout').textContent = `${round(Math.max(.8, result.width / 29 * plant.height))} м²`; $('leafReadout').textContent = result.leaves;
-    $('trunkReadout').textContent = plant.matureTrunkDiameter ? `${Math.max(2, Math.round(plant.matureTrunkDiameter * (1 - Math.exp(-state.age / plant.maturity))))} см` : '—';
+    $('trunkReadout').textContent = plant.matureTrunkDiameter ? `${Math.round(plant.matureTrunkDiameter / MAX_TRUNK_MULTIPLIER * trunkGrowth(state.age))} см` : '—';
     $('plantName').textContent = plant.name;
     canvas.setAttribute('aria-label', `Процедурная иллюстрация ${plant.name}, возраст ${state.age} лет`);
   }
