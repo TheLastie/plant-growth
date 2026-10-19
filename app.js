@@ -2,12 +2,13 @@
   const canvas = document.querySelector('#plantCanvas'), ctx = canvas.getContext('2d');
   const $ = id => document.getElementById(id);
   const input = { age: $('ageInput'), light: $('lightInput'), water: $('waterInput'), wind: $('windInput') };
+  const MAX_AGE = 120;
   const state = { species: 'oak', age: 6, light: 72, water: 58, wind: 18 };
   const plants = {
-    oak: { name: 'Quercus robur', height: 1.2, spread: .54, leaf: '#536d46', lightLeaf: '#8c9b69', bark: '#745943', width: 4.2 },
-    birch: { name: 'Betula pendula', height: 1.34, spread: .38, leaf: '#869b64', lightLeaf: '#bdc28c', bark: '#e3ddc9', width: 3.1 },
-    fern: { name: 'Pteridium aquilinum', height: .64, spread: .78, leaf: '#587443', lightLeaf: '#9eaa70', bark: '#506940', width: 1.4 },
-    monstera: { name: 'Monstera deliciosa', height: .83, spread: .65, leaf: '#365d47', lightLeaf: '#8da878', bark: '#52714f', width: 2.7 }
+    oak: { name: 'Quercus robur', height: 1.2, matureHeight: 28, maturity: 34, spread: .54, leaf: '#536d46', lightLeaf: '#8c9b69', bark: '#745943', width: 4.2 },
+    birch: { name: 'Betula pendula', height: 1.34, matureHeight: 24, maturity: 26, spread: .38, leaf: '#869b64', lightLeaf: '#bdc28c', bark: '#e3ddc9', width: 3.1 },
+    fern: { name: 'Pteridium aquilinum', height: .64, matureHeight: 1.8, maturity: 8, spread: .78, leaf: '#587443', lightLeaf: '#9eaa70', bark: '#506940', width: 1.4 },
+    monstera: { name: 'Monstera deliciosa', height: .83, matureHeight: 3.2, maturity: 14, spread: .65, leaf: '#365d47', lightLeaf: '#8da878', bark: '#52714f', width: 2.7 }
   };
   const notes = {
     branching: ['Ветви повторяют себя', 'Каждый новый побег наследует направление ствола, но расходится под собственным углом. Повторение на разных масштабах создаёт узнаваемую крону.', 'Lₙ₊₁ = 0.72 × Lₙ', 'правило ветвления', 'Y'],
@@ -53,9 +54,10 @@
   }
 
   function renderPlant(w, ground, plant, rng) {
-    const scale = Math.min(w / 610, 1.05), age = state.age / 12;
-    const maxDepth = Math.min(8, 4 + Math.floor(age * 4));
-    const desiredHeight = Math.min(ground * .7, plant.height * (40 + state.age * 30) * scale);
+    const scale = Math.min(w / 610, 1.05);
+    const ageGrowth = 1 - Math.exp(-state.age / plant.maturity);
+    const maxDepth = 4 + Math.floor(Math.min(1, state.age / 80) * 7);
+    const desiredHeight = Math.min(ground * .91, ground * (.17 + .77 * ageGrowth) * plant.height / 1.2);
     const size = desiredHeight * .3 / (1 - Math.pow(.7, maxDepth + 1));
     const x0 = w * .5 - (state.light - 50) * .68 * scale - state.wind * .16 * scale, y0 = ground;
     const lightLean = (state.light / 100 - .5) * 1.02, wind = state.wind / 100 * .44;
@@ -65,7 +67,7 @@
     ctx.restore();
 
     if (state.species === 'fern') {
-      const fronds = 5 + Math.round(age * 9);
+      const fronds = 5 + Math.round(ageGrowth * 12);
       for (let f = 0; f < fronds; f++) {
         const side = f % 2 ? 1 : -1, a = side * (.2 + f / fronds * .32) + lightLean * .3, len = desiredHeight * (.7 + rng() * .35);
         ctx.beginPath(); ctx.moveTo(x0, y0); ctx.strokeStyle = plant.bark; ctx.lineWidth = 1.5 * scale;
@@ -74,30 +76,32 @@
       }
       minX = x0 - size * .45; maxX = x0 + size * .45;
     } else if (state.species === 'monstera') {
-      const count = 4 + Math.floor(age * 10);
+      const count = 4 + Math.floor(ageGrowth * 18);
       for (let i = 0; i < count; i++) { const y = y0 - (i + 1) * desiredHeight / (count + 1), side = i % 2 ? 1 : -1, a = side * (.6 + rng() * .3) + lightLean * .35, reach = (48 + rng() * 33) * scale; ctx.beginPath(); ctx.moveTo(x0, y); ctx.quadraticCurveTo(x0 + side * 18 * scale, y + 6, x0 + side * reach * .3, y + 8); ctx.strokeStyle = plant.bark; ctx.lineWidth = 2 * scale; ctx.stroke(); leaf(x0 + side * reach * .35, y - 2, a, (19 + rng() * 8) * scale, rng, plant); leaves++; minX = Math.min(minX, x0 - reach * .5); maxX = Math.max(maxX, x0 + reach * .5); }
     }
 
+    let branchCount = 0;
+    const segmentLimit = 2600;
     function branch(x, y, a, len, thick, depth) {
-      if (depth > maxDepth || len < 5 * scale || (depth > 2 && state.age < 3 && rng() < (3 - state.age) * .24)) {
+      if (depth > maxDepth || len < 3.5 * scale || branchCount >= segmentLimit) {
         const n = state.species === 'monstera' ? 1 : 3;
         for (let i = 0; i < n; i++) { leaf(x + (rng() - .5) * 5 * scale, y + (rng() - .5) * 5 * scale, a + (rng() - .5), (7 + rng() * 5) * scale * (.65 + state.water / 200), rng, plant); leaves++; }
         return;
       }
+      branchCount++;
       const next = a + (depth === 0 ? lightLean * .43 : lightLean * .16) + Math.sin(depth * 1.7) * wind * .12;
       const dx = Math.sin(next) * len, dy = Math.cos(next) * len, nx = x + dx, ny = y - dy;
       minX = Math.min(minX, nx); maxX = Math.max(maxX, nx);
       ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + dx * .52 + wind * len * .025, y - dy * .52, nx, ny);
       ctx.strokeStyle = plant.bark; ctx.lineWidth = Math.max(.6, thick); ctx.lineCap = 'round'; ctx.stroke();
-      if (depth >= maxDepth - 2 || (depth > 0 && rng() > (depth < 3 ? .4 : .22))) {
-        const s = plant.spread * (.8 + rng() * .4);
-        branch(nx, ny, next - s, len * (.68 + rng() * .05), thick * .68, depth + 1);
-        branch(nx, ny, next + s, len * (.68 + rng() * .05), thick * .68, depth + 1);
-        if (depth < 2 && rng() > .55) branch(nx, ny, next + (rng() - .5) * .3, len * .57, thick * .55, depth + 1);
-      } else if (rng() > .15) branch(nx, ny, next + plant.spread * (rng() > .5 ? 1 : -1), len * (.69 + rng() * .04), thick * .68, depth + 1);
+      const spread = plant.spread * (.84 + rng() * .32);
+      const branchLength = len * (.68 + rng() * .05);
+      branch(nx, ny, next - spread, branchLength, thick * .68, depth + 1);
+      branch(nx, ny, next + spread, branchLength, thick * .68, depth + 1);
+      if (depth < 3 && rng() > .58) branch(nx, ny, next + (rng() - .5) * .3, len * .57, thick * .55, depth + 1);
       if (depth === maxDepth - 1 || len < 22 * scale) { leaf(nx, ny, next + .2, (8 + rng() * 4) * scale, rng, plant); leaves++; }
     }
-    if (state.species !== 'fern') branch(x0, y0, lightLean * .14 - wind * .15, size, plant.width * scale * (.72 + age * .48), 0);
+    if (state.species !== 'fern') branch(x0, y0, lightLean * .14 - wind * .15, size, plant.width * scale * (.72 + ageGrowth * .48), 0);
     return { leaves, width: maxX - minX, x: x0, top: y0 - desiredHeight };
   }
 
@@ -112,14 +116,17 @@
   }
 
   function updateLabels(result, plant) {
-    $('ageOutput').textContent = state.age === 1 ? '1 год' : `${state.age} лет`;
+    const lastTwo = state.age % 100, last = state.age % 10;
+    const yearWord = lastTwo >= 11 && lastTwo <= 14 ? 'лет' : last === 1 ? 'год' : last >= 2 && last <= 4 ? 'года' : 'лет';
+    $('ageOutput').textContent = `${state.age} ${yearWord}`;
     $('lightOutput').textContent = `${state.light < 35 ? 'Тень' : state.light < 68 ? 'Полутень' : 'Открытое место'} · ${state.light}%`;
     $('waterOutput').textContent = `${state.water < 30 ? 'Сухо' : state.water < 70 ? 'Умеренно' : 'Влажно'} · ${state.water}%`;
     $('windOutput').textContent = `${state.wind < 25 ? 'Тихо' : state.wind < 65 ? 'Лёгкий' : 'Сильный'} · ${state.wind}%`;
     Object.values(input).forEach(el => el.style.setProperty('--fill', `${(el.value - el.min) / (el.max - el.min) * 100}%`));
-    $('ageSummary').textContent = `${String(state.age).padStart(2, '0')} / 12 лет`; $('growthMeter').style.width = `${state.age / 12 * 100}%`;
-    $('stageLabel').textContent = state.age <= 2 ? 'Укоренение' : state.age <= 5 ? 'Ювенильный рост' : state.age <= 9 ? 'Формирование кроны' : 'Зрелое растение';
-    $('heightReadout').textContent = `около ${round(plant.height * state.age * (.72 + state.water / 350) * (.8 + state.light / 400))} м`;
+    $('ageSummary').textContent = `${String(state.age).padStart(3, '0')} / ${MAX_AGE} лет`; $('growthMeter').style.width = `${state.age / MAX_AGE * 100}%`;
+    $('stageLabel').textContent = state.age <= 2 ? 'Укоренение' : state.age <= 12 ? 'Ювенильный рост' : state.age <= 45 ? 'Формирование кроны' : state.age <= 85 ? 'Зрелое растение' : 'Старый экземпляр';
+    const estimatedHeight = plant.matureHeight * (1 - Math.exp(-state.age / plant.maturity)) * (.86 + state.water / 500) * (.9 + state.light / 1000);
+    $('heightReadout').textContent = `около ${round(Math.min(plant.matureHeight, estimatedHeight))} м`;
     $('crownReadout').textContent = `${round(Math.max(.8, result.width / 29 * plant.height))} м²`; $('leafReadout').textContent = result.leaves;
     $('plantName').textContent = plant.name;
     canvas.setAttribute('aria-label', `Процедурная иллюстрация ${plant.name}, возраст ${state.age} лет`);
