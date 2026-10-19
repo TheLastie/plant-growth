@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap');
+/* Typography is kept local so the field journal stays quick and dependable offline. */
 
 :root{color-scheme:light;--paper:#e8e3d7;--paper-light:#f0ece2;--ink:#26352c;--muted:#768074;--line:#c9c8b8;--forest:#2c5942;--leaf:#678254;--clay:#b65e45;--sun:#cfac5d;--serif:'Instrument Serif',Georgia,serif;--sans:'DM Sans',Arial,sans-serif;--mono:'DM Mono',monospace}
 *{box-sizing:border-box}
@@ -96,3 +96,189 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.2)}input[type=ra
 @media(max-width:720px){.page-shell{padding:0 19px}.masthead{height:62px}.masthead-note{font-size:8px}.github-link{font-size:9px}.intro{padding:35px 0 25px}.intro h1{font-size:clamp(47px,11vw,69px)}.intro-text{font-size:12px;max-width:280px;line-height:1.6}.specimen-stamp{width:74px;height:74px;margin-right:0}.specimen-stamp strong{font-size:25px}.stamp-line{font-size:6px}.workbench{display:flex;flex-direction:column}.controls-panel{border-right:0;padding:20px 0 18px}.species-options{grid-template-columns:repeat(4,minmax(58px,1fr));max-width:380px}.slider-group{padding:10px 0}.specimen-panel{padding:0 0 16px;min-height:480px}.canvas-wrap{min-height:330px}.fieldnotes-panel{display:flex;padding:19px 0}.notes-number{display:block}.fieldnotes-panel h2{margin:12px 0 15px;font-size:29px}.note-content{min-height:0;padding-bottom:12px}.note-content p{max-width:none}.measured-values{margin-top:auto}.model-caption{margin-top:10px}.growth-footer{gap:9px}.page-footer{height:auto;min-height:62px;gap:10px;flex-wrap:wrap;padding:14px 0}.page-footer span:nth-child(2){display:none}}
 @media(max-width:390px){.page-shell{padding:0 14px}.masthead-note{max-width:130px}.masthead-note .slash,.masthead-note:not(.live-dot){font-size:0}.masthead-note .live-dot{font-size:initial}.github-link{font-size:8px}.specimen-stamp{width:62px;height:62px}.specimen-stamp strong{font-size:21px}.canvas-coordinate{font-size:7px}.canvas-wrap{min-height:300px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* Silva field journal: a folded working sheet with ink, bark and pollen tones. */
+:root{
+  color-scheme:light;
+  --paper:#d9d5c7;
+  --paper-light:#f0ecdf;
+  --ink:#26342b;
+  --muted:#707a6d;
+  --line:#b8b8a7;
+  --forest:#31513d;
+  --leaf:#647b4e;
+  --clay:#9e563c;
+  --sun:#c6a254;
+  --serif:'Palatino Linotype','Book Antiqua',Georgia,serif;
+  --sans:'Trebuchet MS',Verdana,sans-serif;
+  --mono:'Courier New',monospace;
+}
+html,body{background:#d2cebf}
+body{background:
+  radial-gradient(ellipse at 12% 12%,rgba(255,255,255,.45),transparent 35%),
+  repeating-linear-gradient(0deg,rgba(67,72,52,.018) 0 1px,transparent 1px 5px),
+  #d2cebf}
+.page-shell{max-width:1480px;padding:0 clamp(24px,5.2vw,78px);background:var(--paper-light);box-shadow:0 0 0 1px rgba(55,64,47,.12),10px 0 0 -5px rgba(94,79,51,.13),20px 0 0 -10px rgba(94,79,51,.1);position:relative}
+.page-shell:before{content:"";position:absolute;top:0;bottom:0;left:13px;width:1px;background:rgba(158,86,60,.28);pointer-events:none}
+.masthead{height:78px;border-color:#b6b6a6}
+.wordmark{font-size:30px;letter-spacing:-1.8px}
+.mark{border-color:var(--forest)}
+.masthead-note,.github-link{font:11px var(--sans);letter-spacing:.015em}
+.github-link{border-bottom-color:#8f9a85}
+.github-link span{font-size:13px}
+.intro{padding:52px 0 42px;align-items:center;position:relative}
+.intro:after{content:"";position:absolute;right:17%;bottom:44px;width:120px;height:36px;border-bottom:1px solid #9ca58e;border-radius:50%;transform:rotate(-8deg);opacity:.62;pointer-events:none}
+.kicker,.eyebrow,.stamp-line{font:10px var(--sans);letter-spacing:.045em;text-transform:none}
+.kicker{margin-bottom:16px}
+.kicker span{font-family:var(--serif);font-size:14px;font-style:italic}
+h1{font-size:clamp(54px,6.8vw,88px);line-height:.91;letter-spacing:-.055em;max-width:780px}
+h1 em{display:inline-block;transform:rotate(-1.2deg);transform-origin:left center;color:var(--forest);text-decoration:underline;text-decoration-color:#b3a16e;text-decoration-thickness:1px;text-underline-offset:9px}
+.intro-text{max-width:445px;font:15px/1.55 var(--serif);color:#606b5e;margin-top:20px}
+.specimen-stamp{width:112px;height:112px;border:1px solid #8e9981;outline:1px dashed #9ca48d;outline-offset:5px;transform:rotate(7deg);margin-right:7%;color:#6c786a;position:relative}
+.specimen-stamp:after{content:"";position:absolute;inset:5px;border:1px solid rgba(142,153,129,.35);border-radius:50%}
+.specimen-stamp strong{font-size:35px;color:var(--clay)}
+.workbench{grid-template-columns:minmax(235px,270px) minmax(390px,1fr) minmax(230px,265px);min-height:610px;border:1px solid #87917f;border-left:0;border-right:0;position:relative}
+.workbench:before,.workbench:after{content:"";position:absolute;left:-10px;width:7px;height:7px;border-radius:50%;background:#b4b09f;box-shadow:0 1px 1px rgba(31,41,29,.18);z-index:2}
+.workbench:before{top:26px}.workbench:after{bottom:26px}
+.controls-panel{padding:28px 21px 25px 0;border-right:1px solid #c6c4b5}
+.panel-heading{margin-bottom:18px}
+.panel-heading h2{font-size:29px}
+.eyebrow{color:#788274}
+.reset-button{font:11px var(--sans);color:var(--clay);border-bottom-style:dotted}
+.species-picker{border-bottom:1px dashed #b9bcad;padding-bottom:16px;margin-bottom:7px}
+.species-picker legend{font:italic 15px var(--serif);color:#52604f;margin-bottom:10px}
+.species-options{gap:3px}
+.species-button{border:0;border-bottom:1px solid transparent;border-radius:0;padding:8px 3px 7px;color:#626f5f;font:10px var(--sans);transition:color .22s,border-color .22s,transform .35s cubic-bezier(.2,.75,.25,1)}
+.species-button:hover{background:transparent;color:var(--clay);transform:translateY(-3px)}
+.species-button.is-active{border-color:var(--clay);background:rgba(185,174,133,.19);color:var(--ink)}
+.species-glyph{transition:transform .45s cubic-bezier(.2,.75,.25,1)}
+.species-button:hover .species-glyph{transform:rotate(-8deg) scale(1.13)}
+.slider-group{padding:13px 0 14px;border-bottom:1px dashed #b9bcad}
+.slider-label{margin-bottom:8px}
+.slider-label label{font:italic 15px var(--serif);color:#48594a}
+.slider-label output{font:11px var(--sans);color:var(--clay)}
+input[type=range]{height:21px;touch-action:pan-y}
+input[type=range]::-webkit-slider-runnable-track{height:3px;background:linear-gradient(to right,var(--forest) 0 var(--fill,50%),#b8b9a8 var(--fill,50%) 100%)}
+input[type=range]::-moz-range-track{height:3px;background:#b8b9a8}input[type=range]::-moz-range-progress{height:3px;background:var(--forest)}
+input[type=range]::-webkit-slider-thumb{width:15px;height:15px;border:2px solid var(--paper-light);background:var(--clay);box-shadow:0 0 0 1px var(--clay);margin-top:-6px}
+input[type=range]::-moz-range-thumb{width:11px;height:11px;border:2px solid var(--paper-light);background:var(--clay);box-shadow:0 0 0 1px var(--clay)}
+.range-ends{font:9px var(--sans);color:#777f70}
+.control-note{font:12px/1.55 var(--serif);color:#626d5d;margin-top:17px;padding-left:21px}
+.note-mark{font:italic 19px var(--serif);color:var(--clay)}
+.specimen-panel{padding:0 20px 18px;min-height:610px}
+.canvas-toolbar{height:58px;border-color:#c6c4b5}
+.specimen-name{gap:12px}.specimen-name strong{font:italic 19px var(--serif);color:#394b3a}
+.specimen-index{font:10px var(--sans);color:var(--clay);border-color:#b7b9a9}
+.canvas-status{font:10px var(--sans);color:#687563}
+.canvas-status span{background:#758853;box-shadow:0 0 0 3px rgba(117,136,83,.15)}
+.icon-button{width:32px;height:32px;border-radius:0;border-color:#a4aa98;background:#e4e0d3;font-size:18px}
+.icon-button:hover{background:var(--forest);color:var(--paper-light);transform:translateY(-2px)}
+.canvas-wrap{min-height:380px;background:#dbe0cf;border:1px solid #a4ae99;border-top:0;box-shadow:inset 0 0 0 5px rgba(243,240,226,.5),inset 0 0 0 6px rgba(107,124,87,.28);}
+.canvas-wrap:before{content:"";position:absolute;z-index:1;inset:14px;border:1px solid rgba(90,111,76,.18);pointer-events:none}
+.canvas-wrap:after{content:"";position:absolute;z-index:1;top:0;bottom:0;left:0;width:10px;background:linear-gradient(90deg,rgba(43,56,40,.1),transparent);pointer-events:none}
+#plantCanvas{transform-origin:50% 82%}
+.canvas-wrap.is-growing #plantCanvas{animation:plant-settle .38s cubic-bezier(.2,.75,.25,1) both}
+@keyframes plant-settle{from{opacity:.48;transform:translateY(5px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+.canvas-coordinate{font:9px var(--sans);letter-spacing:.025em;color:#5e715b}
+.canvas-coordinate span{color:#7c8874}
+.coordinate-top{top:23px;left:25px}.coordinate-bottom{bottom:22px;left:25px}
+.light-indicator{top:24px;right:26px;font:9px var(--sans);color:#96702f}
+.light-indicator i{width:15px;height:15px;background:#d5b35e;box-shadow:0 0 0 4px rgba(213,179,94,.2),0 0 0 9px rgba(213,179,94,.09);animation:greenhouse-sun 5s ease-in-out infinite}
+@keyframes greenhouse-sun{50%{box-shadow:0 0 0 7px rgba(213,179,94,.18),0 0 0 14px rgba(213,179,94,.06)}}
+.growth-footer{gap:13px;padding-top:16px}
+.growth-caption .eyebrow{font-size:9px}
+.growth-caption>span:last-child{font:italic 14px var(--serif);color:#48594a}
+.growth-meter{height:3px;background:#c0c2b2}.growth-meter i{background:var(--clay);transition:width .65s cubic-bezier(.2,.75,.25,1)}
+.growth-age{font:10px var(--sans);color:#707a6d;white-space:nowrap}
+.fieldnotes-panel{padding:30px 0 21px 24px;border-color:#c6c4b5}
+.notes-head{padding-bottom:9px;border-bottom:1px dotted #b5b8a7}
+.notes-number{font:italic 12px var(--serif);color:var(--clay)}
+.fieldnotes-panel h2{font-size:36px;line-height:.96;margin:20px 0 23px;letter-spacing:-.035em}
+.fieldnotes-panel h2 em{color:var(--forest);text-decoration:underline;text-decoration-color:#c5a65c;text-decoration-thickness:1px;text-underline-offset:5px}
+.note-tabs{border-color:#b8b8a7}
+.note-tab{font:11px var(--sans);color:#747c70;padding:11px 2px;border-bottom-width:1px}
+.note-tab.is-active{color:var(--clay);border-color:var(--clay)}
+.note-content{padding-top:20px;min-height:205px;animation:note-in .48s cubic-bezier(.2,.75,.25,1) both}
+@keyframes note-in{from{opacity:0;transform:translateY(9px) rotate(-.5deg)}to{opacity:1;transform:translateY(0) rotate(0)}}
+.note-symbol{width:39px;height:39px;border-radius:50% 46% 52% 43%;border:1px solid #9ca78f;background:#e7e4d7;color:var(--forest);font-style:italic;margin-bottom:13px;box-shadow:2px 2px 0 #c7c3b2}
+.note-content h3{font:23px var(--serif);color:#394b3a;margin-bottom:8px}
+.note-content p{font:13px/1.62 var(--serif);color:#626c5f}
+.formula{margin-top:14px;border-left:2px solid var(--clay);padding-left:10px;font:13px var(--serif);color:var(--forest)}
+.formula span{font:10px var(--sans);color:#808779}
+.measured-values{border-color:#b9bcad}
+.measured-values div{padding:12px 0}.measured-values div+div{border-color:#d2d0c1}
+.measured-values span{font:12px var(--serif);color:#697364}.measured-values strong{font:20px var(--serif);color:var(--clay)}
+.model-caption{font:11px/1.55 var(--serif);color:#838779}
+.page-footer{font:10px var(--sans);color:#737d6f}
+.page-footer span:nth-child(2){font:italic 13px var(--serif);color:#677260}
+.page-footer a{border-bottom-style:dotted}
+button:focus-visible,a:focus-visible{outline:2px solid var(--clay);outline-offset:4px}
+
+@media(max-width:1100px){
+  .page-shell{padding:0 34px}
+  .workbench{grid-template-columns:minmax(220px,255px) minmax(0,1fr)}
+  .controls-panel{padding-right:18px}
+  .specimen-panel{padding-right:0;padding-left:18px}
+  .fieldnotes-panel{grid-template-columns:.85fr 1.2fr .85fr;column-gap:18px;padding:22px 0}
+  .intro:after{right:25%;bottom:24px}
+}
+@media(max-width:760px){
+  body{background:#d2cebf}
+  .page-shell{padding:0 21px;box-shadow:none}
+  .page-shell:before{left:8px}
+  .masthead{height:66px}
+  .wordmark{font-size:26px}
+  .masthead-note{max-width:145px;font:10px/1.25 var(--sans);text-align:center}
+  .github-link{font-size:10px;white-space:nowrap}
+  .intro{padding:35px 0 30px;align-items:flex-start}
+  .intro:after{right:8px;bottom:15px;width:82px}
+  h1{font-size:clamp(48px,12vw,72px);line-height:.94}
+  .intro-text{max-width:300px;font-size:14px;margin-top:16px}
+  .specimen-stamp{width:76px;height:76px;flex:none;margin:14px 10px 0 8px}
+  .specimen-stamp strong{font-size:24px;margin:3px 0}
+  .stamp-line{font-size:6px}
+  .workbench{display:flex;flex-direction:column;min-height:0;border-top:1px solid var(--ink)}
+  .workbench:before,.workbench:after{left:-8px;width:5px;height:5px}
+  .controls-panel{border:0;padding:23px 0 20px}
+  .panel-heading h2{font-size:27px}
+  .species-options{grid-template-columns:repeat(4,minmax(0,1fr));max-width:none;gap:6px}
+  .species-button{min-height:58px;gap:5px;font-size:11px}
+  .slider-group{padding:12px 0}
+  .slider-label label{font-size:17px}
+  .slider-label output{font-size:12px}
+  .range-ends{font-size:10px}
+  .control-note{font-size:13px;margin-top:14px}
+  .specimen-panel{padding:0 0 22px;min-height:0}
+  .canvas-toolbar{height:52px}
+  .canvas-wrap{flex:none;height:clamp(310px,105vw,470px);min-height:0}
+  .growth-footer{grid-template-columns:1fr auto;gap:8px 12px;padding:13px 2px 0}
+  .growth-meter{grid-column:1/-1;grid-row:2}
+  .fieldnotes-panel{display:flex;padding:22px 0 19px;border-top:1px dashed #aeb3a2;border-left:0}
+  .notes-number{display:block}
+  .fieldnotes-panel h2{font-size:34px;margin:15px 0 18px}
+  .note-content{min-height:0;padding-bottom:15px}
+  .note-content p{max-width:48ch}
+  .measured-values{margin-top:10px}
+  .page-footer{min-height:65px;height:auto;padding:13px 0;gap:10px;flex-wrap:wrap}
+  .page-footer span:nth-child(2){display:block}
+}
+@media(max-width:390px){
+  .page-shell{padding:0 15px}
+  .page-shell:before{left:5px}
+  .masthead-note{max-width:82px;font:8px/1.25 var(--sans)!important;text-align:center}
+  .masthead-note .slash{display:none}
+  .github-link{font-size:9px}
+  .intro{display:flex;flex-direction:column;align-items:flex-start;gap:0}
+  .intro-copy{width:100%}
+  h1{font-size:46px}
+  .specimen-stamp{width:54px;height:54px;align-self:flex-end;margin:10px 3px 0 0}
+  .specimen-stamp strong{font-size:20px}
+  .stamp-line{font-size:5px}
+  .canvas-coordinate{font-size:8px}
+  .coordinate-top{left:19px}.coordinate-bottom{left:19px}
+  .canvas-actions{gap:8px}.canvas-status{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+  .light-indicator i{animation:none}
+  .species-button,.species-glyph,.growth-meter i{transition:none}
+}

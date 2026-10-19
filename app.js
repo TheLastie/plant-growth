@@ -4,9 +4,10 @@
   const input = { age: $('ageInput'), light: $('lightInput'), water: $('waterInput'), wind: $('windInput') };
   const MAX_AGE = 120;
   const state = { species: 'oak', age: 6, light: 72, water: 58, wind: 18 };
+  let growthSettleTimer;
   const plants = {
-    oak: { name: 'Quercus robur', height: 1.2, matureHeight: 28, maturity: 34, spread: .54, leaf: '#536d46', lightLeaf: '#8c9b69', bark: '#745943', width: 4.2 },
-    birch: { name: 'Betula pendula', height: 1.34, matureHeight: 24, maturity: 26, spread: .38, leaf: '#869b64', lightLeaf: '#bdc28c', bark: '#e3ddc9', width: 3.1 },
+    oak: { name: 'Quercus robur', height: 1.2, matureHeight: 28, maturity: 34, matureTrunkDiameter: 96, spread: .54, leaf: '#536d46', lightLeaf: '#8c9b69', bark: '#745943', width: 4.2 },
+    birch: { name: 'Betula pendula', height: 1.34, matureHeight: 24, maturity: 26, matureTrunkDiameter: 52, spread: .38, leaf: '#869b64', lightLeaf: '#bdc28c', bark: '#e3ddc9', width: 3.1 },
     fern: { name: 'Pteridium aquilinum', height: .64, matureHeight: 1.8, maturity: 8, spread: .78, leaf: '#587443', lightLeaf: '#9eaa70', bark: '#506940', width: 1.4 },
     monstera: { name: 'Monstera deliciosa', height: .83, matureHeight: 3.2, maturity: 14, spread: .65, leaf: '#365d47', lightLeaf: '#8da878', bark: '#52714f', width: 2.7 }
   };
@@ -137,7 +138,7 @@
       if (depth < 3 && rng() > .58) branch(nx, ny, next + (rng() - .5) * .3, len * .57, thick * .55, depth + 1);
       if (depth === maxDepth - 1 || len < 22 * scale) { leaf(nx, ny, next + .2, (8 + rng() * 4) * scale, rng, plant); leaves++; }
     }
-    if (state.species === 'oak' || state.species === 'birch') branch(x0, y0, lightLean * .14 - wind * .15, size, plant.width * scale * (.72 + ageGrowth * .48), 0);
+    if (state.species === 'oak' || state.species === 'birch') branch(x0, y0, lightLean * .14 - wind * .15, size, plant.width * scale * (.7 + ageGrowth * 1.35), 0);
     return { leaves, width: maxX - minX, x: x0, top: y0 - desiredHeight };
   }
 
@@ -164,12 +165,19 @@
     const estimatedHeight = plant.matureHeight * (1 - Math.exp(-state.age / plant.maturity)) * (.86 + state.water / 500) * (.9 + state.light / 1000);
     $('heightReadout').textContent = `около ${round(Math.min(plant.matureHeight, estimatedHeight))} м`;
     $('crownReadout').textContent = `${round(Math.max(.8, result.width / 29 * plant.height))} м²`; $('leafReadout').textContent = result.leaves;
+    $('trunkReadout').textContent = plant.matureTrunkDiameter ? `${Math.max(2, Math.round(plant.matureTrunkDiameter * (1 - Math.exp(-state.age / plant.maturity))))} см` : '—';
     $('plantName').textContent = plant.name;
     canvas.setAttribute('aria-label', `Процедурная иллюстрация ${plant.name}, возраст ${state.age} лет`);
   }
 
   function update() {
     for (const key of Object.keys(input)) state[key] = Number(input[key].value);
+    const stage = canvas.parentElement;
+    stage.classList.remove('is-growing');
+    void stage.offsetWidth;
+    stage.classList.add('is-growing');
+    clearTimeout(growthSettleTimer);
+    growthSettleTimer = setTimeout(() => stage.classList.remove('is-growing'), 420);
     requestAnimationFrame(draw);
   }
   function resize() { const box = canvas.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2); if (!box.width || !box.height) return; canvas.width = Math.round(box.width * dpr); canvas.height = Math.round(box.height * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); draw(); }
