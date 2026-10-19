@@ -16,6 +16,7 @@ Silva — интерактивная лаборатория процедурно
 - Возраст от 1 до 120 лет управляет высотой кроны и количеством уровней ветвления; предел сегментов сохраняет отзывчивость отрисовки. Доступность воды меняет размер листьев.
 - У видов отдельные формы роста и листьев; у монстеры показаны характерные прорези, у папоротника — дуговые вайи.
 - Иллюстрацию можно сохранить в PNG. Всё работает локально в браузере без сервера и библиотек.
+- Подпишите до четырёх вариантов своей задачей — например, «дерево у северной стены» — и скачайте готовый лист сравнения для садового эскиза или игрового окружения.
 
 Модель художественно упрощает реальную ботанику: она показывает причинные связи между условиями и формой, но не предсказывает биологический рост конкретного растения.
 
@@ -35,6 +36,7 @@ Silva is an interactive procedural growth lab. Choose an oak, birch, fern, or mo
 - Age from 1 to 120 years controls canopy height and adds branching levels, with a segment cap to keep rendering responsive. Water availability changes leaf size.
 - Each species has its own growth pattern and foliage; monstera leaves include characteristic splits and the fern grows arching fronds.
 - Save the illustration as a PNG. The app runs locally in the browser without a server or dependencies.
+- Label up to four growth variants with their intended use — for example, “tree beside the north wall” — then download a comparison sheet for environment art or a garden concept.
 
 The model is an artistic simplification of botany. It demonstrates cause and effect between conditions and form; it does not predict the biological growth of a specific plant.
 

@@ -5,19 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="canonical" href="https://thelastie.github.io/plant-growth/">
   <meta name="theme-color" content="#e8e3d7">
-<meta name="description" content="Вырастите цифровое растение и наблюдайте, как свет, вода, возраст и ветер меняют его форму. Интерактивная лаборатория роста на основе процедурных алгоритмов.">
+<meta name="description" content="Соберите и подпишите до четырёх вариантов растения, сравните их условия и скачайте лист для садового эскиза или игрового окружения.">
 <meta name="geo.region" content="RU-BA">
 <meta name="geo.placename" content="Уфа, Республика Башкортостан">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://thelastie.github.io/plant-growth/">
   <meta property="og:title" content="Silva — лаборатория роста растений">
-  <meta property="og:description" content="Настройте среду, вырастите дерево или папоротник и исследуйте алгоритмы его формы.">
+  <meta property="og:description" content="Соберите и подпишите варианты формы растения, сравните условия и скачайте готовый лист для эскиза сада или игрового окружения.">
   <meta property="og:locale" content="ru_RU">
   <meta property="og:locale:alternate" content="en_US">
   <meta property="og:image" content="screenshots/plant-growth.png">
   <title>Silva — лаборатория роста растений</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 35V19M20 25C11 24 7 19 8 10c8-1 13 3 12 12m0 3c1-9 6-13 14-12 0 8-4 13-14 14' fill='none' stroke='%232c5942' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="study.css?v=2">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -26,7 +27,7 @@
     "applicationCategory": "EducationalApplication",
     "operatingSystem": "Any",
     "inLanguage": ["ru", "en"],
-    "description": "An interactive procedural plant growth simulator showing how light, water, age, and wind shape trees and foliage."
+    "description": "A browser-based botanical concept tool for comparing stylized plant forms across environmental settings and exporting labeled reference sheets for garden concepts and environment art. It is not a biological growth forecast."
   }
   </script>
 </head>
@@ -115,6 +116,15 @@
             <div class="growth-meter" aria-hidden="true"><i id="growthMeter"></i></div>
             <span class="growth-age" id="ageSummary">06 / 120 лет</span>
           </div>
+          <section class="study-shelf" aria-labelledby="studyTitle">
+            <div class="study-head"><div><span class="eyebrow">Для эскиза и окружения</span><h3 id="studyTitle">Лист сравнения</h3></div><div class="study-actions"><button id="saveStudy" type="button">Сохранить образец</button><button id="exportStudies" type="button" disabled>Скачать лист</button></div></div>
+            <div class="study-brief">
+              <label for="studyLabelInput">Что хотите запомнить об этом варианте?</label>
+              <input id="studyLabelInput" type="text" maxlength="54" autocomplete="off" placeholder="Например: «дерево у северной стены»">
+            </div>
+            <p class="study-caption" id="studyCaption" aria-live="polite">Сохраняйте формы при разных условиях и сравнивайте их рядом. Это визуальная модель, а не прогноз роста настоящего растения.</p>
+            <div class="study-grid" id="studyGrid"></div>
+          </section>
         </section>
 
         <aside class="fieldnotes-panel">
@@ -144,6 +154,6 @@
     </main>
   </div>
   <script src="preview-bridge.js" defer></script>
-  <script src="app.js" defer></script>
+  <script src="app.js?v=3" defer></script>
 </body>
 </html>

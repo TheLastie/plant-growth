@@ -2,9 +2,11 @@
   const canvas = document.querySelector('#plantCanvas'), ctx = canvas.getContext('2d');
   const $ = id => document.getElementById(id);
   const input = { age: $('ageInput'), light: $('lightInput'), water: $('waterInput'), wind: $('windInput') };
+  const escapeHTML = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
   const MAX_AGE = 120;
   const MAX_TRUNK_MULTIPLIER = 30;
   const state = { species: 'oak', age: 6, light: 72, water: 58, wind: 18 };
+  const studies = [];
   let growthSettleTimer;
   const trunkGrowth = age => 1 + (MAX_TRUNK_MULTIPLIER - 1) * (Math.max(1, Math.min(MAX_AGE, age)) - 1) / (MAX_AGE - 1);
   const plants = {
@@ -206,6 +208,63 @@
     growthSettleTimer = setTimeout(() => stage.classList.remove('is-growing'), 420);
     requestAnimationFrame(draw);
   }
+  function renderStudies() {
+    $('exportStudies').disabled = studies.length === 0;
+    $('studyCaption').textContent = studies.length
+      ? `${studies.length} из 4 образцов · Сравните силуэт, возраст, свет, влагу и ветер. Это визуальная модель, не биологический прогноз.`
+      : 'Сохраняйте формы при разных условиях и сравнивайте их рядом. Это визуальная модель, а не прогноз роста настоящего растения.';
+    $('studyGrid').innerHTML = studies.map((item,index) => `<article class="study-card"><img src="${item.image}" alt="${escapeHTML(item.label)}, ${escapeHTML(item.name)}, ${item.age} лет"><div class="study-card-copy"><strong>${escapeHTML(item.label)}</strong><span>${escapeHTML(item.name)} · ${item.age} лет</span><span>Свет ${item.light}% · Влага ${item.water}% · Ветер ${item.wind}%</span></div><button type="button" data-remove-study="${item.id}" aria-label="Удалить образец ${index+1}">×</button></article>`).join('');
+    $('studyGrid').querySelectorAll('[data-remove-study]').forEach(button => button.addEventListener('click', () => {
+      const index = studies.findIndex(item => item.id === button.dataset.removeStudy);
+      if (index >= 0) studies.splice(index, 1);
+      renderStudies();
+    }));
+  }
+  function saveStudy() {
+    if (studies.length >= 4) { $('studyCaption').textContent = 'Лист уже содержит четыре образца. Удали один, чтобы сохранить новый.'; return; }
+    const labelInput = $('studyLabelInput');
+    const label = labelInput.value.trim() || `${plants[state.species].name} · ${state.age} лет`;
+    studies.push({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+      image: canvas.toDataURL('image/png'),
+      label,
+      name: plants[state.species].name,
+      age: state.age,
+      light: state.light,
+      water: state.water,
+      wind: state.wind
+    });
+    labelInput.value = '';
+    renderStudies();
+  }
+  async function exportStudySheet() {
+    if (!studies.length) return;
+    const sheet = document.createElement('canvas'), ctx = sheet.getContext('2d');
+    const columns = studies.length > 2 ? 2 : studies.length, rows = Math.ceil(studies.length / columns);
+    const cardWidth = 480, cardHeight = 400;
+    sheet.width = columns * cardWidth; sheet.height = rows * cardHeight;
+    ctx.fillStyle = '#eee9dc'; ctx.fillRect(0,0,sheet.width,sheet.height);
+    for (let i=0;i<studies.length;i++) {
+      const item = studies[i], image = new Image();
+      image.src = item.image;
+      await new Promise(resolve => { image.onload = resolve; image.onerror = resolve; });
+      const x = (i % columns) * cardWidth, y = Math.floor(i / columns) * cardHeight;
+      ctx.fillStyle = '#f7f4eb'; ctx.fillRect(x+14,y+14,cardWidth-28,cardHeight-28);
+      if (image.complete && image.naturalWidth) {
+        const scale = Math.min((cardWidth-56)/image.width,(cardHeight-154)/image.height), w=image.width*scale, h=image.height*scale;
+        ctx.drawImage(image,x+(cardWidth-w)/2,y+24,w,h);
+      }
+      ctx.fillStyle = '#293b2d'; ctx.font = '600 16px Georgia, serif'; ctx.fillText(item.label,x+26,y+cardHeight-88,cardWidth-52);
+      ctx.fillStyle = '#63705f'; ctx.font = '12px sans-serif'; ctx.fillText(`${item.name} · ${item.age} лет`,x+26,y+cardHeight-64,cardWidth-52);
+      ctx.font = '11px sans-serif'; ctx.fillText(`Свет ${item.light}% · Влага ${item.water}% · Ветер ${item.wind}%`,x+26,y+cardHeight-40,cardWidth-52);
+    }
+    sheet.toBlob(blob => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob), link = document.createElement('a');
+      link.href = url; link.download = 'silva-study-sheet.png'; link.click();
+      setTimeout(() => URL.revokeObjectURL(url),1000);
+    },'image/png');
+  }
   function resize() { const box = canvas.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2); if (!box.width || !box.height) return; canvas.width = Math.round(box.width * dpr); canvas.height = Math.round(box.height * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); draw(); }
   Object.values(input).forEach(el => el.addEventListener('input', update));
   document.querySelectorAll('.species-button').forEach(button => button.addEventListener('click', () => {
@@ -218,6 +277,8 @@
   });
   $('resetButton').addEventListener('click', () => { state.species = 'oak'; for (const [key, value] of Object.entries({ age: 6, light: 72, water: 58, wind: 18 })) input[key].value = value; document.querySelectorAll('.species-button').forEach(b => { const active = b.dataset.species === 'oak'; b.classList.toggle('is-active', active); b.setAttribute('aria-pressed', String(active)); }); update(); });
   $('downloadButton').addEventListener('click', () => { const a = document.createElement('a'); a.download = `silva-${state.species}-${state.age}-years.png`; a.href = canvas.toDataURL('image/png'); a.click(); });
+  $('saveStudy').addEventListener('click', () => requestAnimationFrame(saveStudy));
+  $('exportStudies').addEventListener('click', exportStudySheet);
   if ('ResizeObserver' in window) new ResizeObserver(resize).observe(canvas.parentElement); else addEventListener('resize', resize, { passive: true });
   resize();
 })();
