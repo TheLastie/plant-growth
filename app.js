@@ -44,11 +44,28 @@
     ctx.fillStyle = (rng() > .48 ? plant.leaf : plant.lightLeaf);
     ctx.strokeStyle = 'rgba(38,63,43,.35)'; ctx.lineWidth = .7;
     const rx = size * (state.species === 'monstera' ? 1.15 : .95), ry = size * .65;
-    ctx.beginPath(); ctx.moveTo(-rx, 0); ctx.quadraticCurveTo(-rx * .4, -ry * 1.25, rx, 0); ctx.quadraticCurveTo(-rx * .4, ry * 1.25, -rx, 0); ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    if (state.species === 'monstera') {
+      ctx.moveTo(-rx, 0);
+      ctx.bezierCurveTo(-rx * .92, -ry * .48, -rx * .76, -ry * 1.2, -rx * .43, -ry * .84);
+      ctx.bezierCurveTo(-rx * .2, -ry * 1.1, -rx * .02, -ry * .58, rx * .12, -ry * .5);
+      ctx.bezierCurveTo(rx * .28, -ry * .92, rx * .48, -ry * 1.08, rx * .59, -ry * .64);
+      ctx.quadraticCurveTo(rx * .9, -ry * .42, rx, 0);
+      ctx.quadraticCurveTo(rx * .9, ry * .42, rx * .59, ry * .64);
+      ctx.bezierCurveTo(rx * .48, ry * 1.08, rx * .28, ry * .92, rx * .12, ry * .5);
+      ctx.bezierCurveTo(-rx * .02, ry * .58, -rx * .2, ry * 1.1, -rx * .43, ry * .84);
+      ctx.bezierCurveTo(-rx * .76, ry * 1.2, -rx * .92, ry * .48, -rx, 0);
+    } else {
+      ctx.moveTo(-rx, 0); ctx.quadraticCurveTo(-rx * .4, -ry * 1.25, rx, 0); ctx.quadraticCurveTo(-rx * .4, ry * 1.25, -rx, 0);
+    }
+    ctx.fill(); ctx.stroke();
     ctx.strokeStyle = 'rgba(232,228,196,.62)'; ctx.beginPath(); ctx.moveTo(-rx * .8, 0); ctx.lineTo(rx * .83, 0); ctx.stroke();
     if (state.species === 'monstera') {
       ctx.fillStyle = '#dce2d3';
-      for (const t of [-.52, -.16, .2, .54]) { ctx.beginPath(); ctx.ellipse(rx * t, -ry * .62, rx * .075, ry * .15, t, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.ellipse(rx * t, ry * .62, rx * .075, ry * .15, -t, 0, Math.PI * 2); ctx.fill(); }
+      for (const t of [-.24, .18, .53]) {
+        ctx.beginPath(); ctx.ellipse(rx * t, -ry * .48, rx * .055, ry * .19, t * .5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(rx * t, ry * .48, rx * .055, ry * .19, -t * .5, 0, Math.PI * 2); ctx.fill();
+      }
     }
     ctx.restore();
   }
@@ -62,9 +79,11 @@
     const x0 = w * .5 - (state.light - 50) * .68 * scale - state.wind * .16 * scale, y0 = ground;
     const lightLean = (state.light / 100 - .5) * 1.02, wind = state.wind / 100 * .44;
     let leaves = 0, minX = x0, maxX = x0;
-    ctx.save(); ctx.strokeStyle = plant.bark; ctx.globalAlpha = .7; ctx.lineCap = 'round';
-    for (let i = 0; i < 7; i++) { const side = i % 2 ? 1 : -1, len = (12 + rng() * 26) * scale; ctx.lineWidth = 1.2 * scale; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(x0 + side * len * .45, y0 + len * .2, x0 + side * len, y0 + len * .65); ctx.stroke(); }
-    ctx.restore();
+    if (state.species !== 'monstera') {
+      ctx.save(); ctx.strokeStyle = plant.bark; ctx.globalAlpha = .7; ctx.lineCap = 'round';
+      for (let i = 0; i < 7; i++) { const side = i % 2 ? 1 : -1, len = (12 + rng() * 26) * scale; ctx.lineWidth = 1.2 * scale; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(x0 + side * len * .45, y0 + len * .2, x0 + side * len, y0 + len * .65); ctx.stroke(); }
+      ctx.restore();
+    }
 
     if (state.species === 'fern') {
       const fronds = 5 + Math.round(ageGrowth * 12);
@@ -76,16 +95,33 @@
       }
       minX = x0 - size * .45; maxX = x0 + size * .45;
     } else if (state.species === 'monstera') {
-      const count = 4 + Math.floor(ageGrowth * 18);
-      for (let i = 0; i < count; i++) { const y = y0 - (i + 1) * desiredHeight / (count + 1), side = i % 2 ? 1 : -1, a = side * (.6 + rng() * .3) + lightLean * .35, reach = (48 + rng() * 33) * scale; ctx.beginPath(); ctx.moveTo(x0, y); ctx.quadraticCurveTo(x0 + side * 18 * scale, y + 6, x0 + side * reach * .3, y + 8); ctx.strokeStyle = plant.bark; ctx.lineWidth = 2 * scale; ctx.stroke(); leaf(x0 + side * reach * .35, y - 2, a, (19 + rng() * 8) * scale, rng, plant); leaves++; minX = Math.min(minX, x0 - reach * .5); maxX = Math.max(maxX, x0 + reach * .5); }
+      const count = 7 + Math.floor(ageGrowth * 7);
+      const lean = lightLean * .12 - wind * .1;
+      const stemX = t => x0 + lean * desiredHeight * t;
+      ctx.save(); ctx.strokeStyle = plant.bark; ctx.lineCap = 'round'; ctx.globalAlpha = .9;
+      ctx.beginPath(); ctx.moveTo(x0, y0);
+      ctx.bezierCurveTo(stemX(.28), y0 - desiredHeight * .28, stemX(.68), y0 - desiredHeight * .68, stemX(1), y0 - desiredHeight);
+      ctx.lineWidth = 3.2 * scale; ctx.stroke();
+      for (let i = 0; i < count; i++) {
+        const t = (i + .65) / (count + .2), y = y0 - desiredHeight * t;
+        const x = stemX(t), side = i % 2 ? -1 : 1;
+        const reach = (30 + ageGrowth * 20 + rng() * 10) * scale;
+        const leafSize = (22 + ageGrowth * 15) * scale * (.9 + rng() * .2) * (.82 + state.water / 420);
+        const angle = side > 0 ? -.34 + lightLean * .14 : Math.PI + .34 + lightLean * .14;
+        const leafX = x + side * reach, leafY = y - 7 * scale;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + side * reach * .55, y - 9 * scale, leafX, leafY);
+        ctx.lineWidth = 1.6 * scale; ctx.stroke();
+        leaf(leafX, leafY, angle, leafSize, rng, plant); leaves++;
+        minX = Math.min(minX, x - reach - leafSize * 1.3); maxX = Math.max(maxX, x + reach + leafSize * 1.3);
+      }
+      ctx.restore();
     }
 
     let branchCount = 0;
     const segmentLimit = 2600;
     function branch(x, y, a, len, thick, depth) {
       if (depth > maxDepth || len < 3.5 * scale || branchCount >= segmentLimit) {
-        const n = state.species === 'monstera' ? 1 : 3;
-        for (let i = 0; i < n; i++) { leaf(x + (rng() - .5) * 5 * scale, y + (rng() - .5) * 5 * scale, a + (rng() - .5), (7 + rng() * 5) * scale * (.65 + state.water / 200), rng, plant); leaves++; }
+        for (let i = 0; i < 3; i++) { leaf(x + (rng() - .5) * 5 * scale, y + (rng() - .5) * 5 * scale, a + (rng() - .5), (7 + rng() * 5) * scale * (.65 + state.water / 200), rng, plant); leaves++; }
         return;
       }
       branchCount++;
@@ -101,7 +137,7 @@
       if (depth < 3 && rng() > .58) branch(nx, ny, next + (rng() - .5) * .3, len * .57, thick * .55, depth + 1);
       if (depth === maxDepth - 1 || len < 22 * scale) { leaf(nx, ny, next + .2, (8 + rng() * 4) * scale, rng, plant); leaves++; }
     }
-    if (state.species !== 'fern') branch(x0, y0, lightLean * .14 - wind * .15, size, plant.width * scale * (.72 + ageGrowth * .48), 0);
+    if (state.species === 'oak' || state.species === 'birch') branch(x0, y0, lightLean * .14 - wind * .15, size, plant.width * scale * (.72 + ageGrowth * .48), 0);
     return { leaves, width: maxX - minX, x: x0, top: y0 - desiredHeight };
   }
 
