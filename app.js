@@ -148,7 +148,7 @@
       const controlX = x + dx * .52 + wind * len * .025, controlY = y - dy * .52;
       ctx.strokeStyle = plant.bark; ctx.lineWidth = Math.max(.6, thick); ctx.lineCap = 'round';
       if (depth === 0 && thick > crownBranchWidth) {
-        const leftEdge = [], rightEdge = [], steps = 10;
+        const leftEdge = [], rightEdge = [], steps = 18;
         for (let i = 0; i <= steps; i++) {
           const t = i / steps, inverse = 1 - t;
           const px = inverse * inverse * x + 2 * inverse * t * controlX + t * t * nx;
@@ -156,7 +156,11 @@
           const tangentX = 2 * inverse * (controlX - x) + 2 * t * (nx - controlX);
           const tangentY = 2 * inverse * (controlY - y) + 2 * t * (ny - controlY);
           const tangentLength = Math.max(1, Math.hypot(tangentX, tangentY));
-          const halfWidth = (thick * (1 - t) + crownBranchWidth * t) / 2;
+          const taperProgress = t < .58
+            ? .24 * (t / .58)
+            : .24 + .76 * Math.pow((t - .58) / .42, 1.18);
+          const barkRidge = 1 + Math.sin(t * 8.5 + state.age * .23) * .035;
+          const halfWidth = (thick - (thick - crownBranchWidth) * taperProgress) * barkRidge / 2;
           const normalX = -tangentY / tangentLength, normalY = tangentX / tangentLength;
           leftEdge.push([px + normalX * halfWidth, py + normalY * halfWidth]);
           rightEdge.push([px - normalX * halfWidth, py - normalY * halfWidth]);
@@ -166,6 +170,14 @@
         for (const [px, py] of leftEdge.slice(1)) ctx.lineTo(px, py);
         for (const [px, py] of rightEdge.reverse()) ctx.lineTo(px, py);
         ctx.closePath(); ctx.fillStyle = plant.bark; ctx.fill();
+        ctx.save(); ctx.clip();
+        ctx.lineCap = 'round'; ctx.lineWidth = Math.max(.7, thick * .012);
+        for (const [offset, color] of [[-.2, 'rgba(224,196,156,.22)'], [0, 'rgba(39,31,24,.16)'], [.19, 'rgba(39,31,24,.12)']]) {
+          ctx.beginPath(); ctx.moveTo(x + thick * offset, y);
+          ctx.quadraticCurveTo(controlX + thick * offset * .35, controlY, nx + crownBranchWidth * offset, ny);
+          ctx.strokeStyle = color; ctx.stroke();
+        }
+        ctx.restore();
       } else {
         ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(controlX, controlY, nx, ny); ctx.stroke();
       }
