@@ -34,6 +34,8 @@ jobs:
             --exclude='screenshots/' \
             --exclude='.playwright-cli/' \
             --exclude='README.md'
+          mkdir -p _site/screenshots
+          cp screenshots/plant-growth.png _site/screenshots/
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v4
         with:
